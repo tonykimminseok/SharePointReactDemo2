@@ -16,15 +16,62 @@ import {
   PropertyFieldListPickerOrderBy,
 } from "@pnp/spfx-property-controls/lib/PropertyFieldListPicker";
 
+import {
+  ThemeProvider,
+  ThemeChangedEventArgs,
+  IReadonlyTheme,
+} from "@microsoft/sp-component-base";
+
+import { getSP } from "./pnpjs-presets";
+
 export interface ISharePointReactDemo2WebPartProps {
-  description: string;
+  documentTitle: string;
+  storageList: string;
+  acknowledgementLabel: string;
+  acknowledgementMessage: string;
+  readMessage: string;
 }
 
 export default class SharePointReactDemo2WebPart extends BaseClientSideWebPart<ISharePointReactDemo2WebPartProps> {
+  private _themeProvider: ThemeProvider;
+  private _themeVariant: IReadonlyTheme | undefined;
+
+  protected async onInit(): Promise<void> {
+    await super.onInit();
+
+    getSP(this.context);
+
+    this._themeProvider = this.context.serviceScope.consume(
+      ThemeProvider.serviceKey
+    );
+
+    this._themeVariant = this._themeProvider.tryGetTheme();
+
+    this._themeProvider.themeChangedEvent.add(
+      this,
+      this._handleThemeChangedEvent
+    );
+  }
+
+  private _handleThemeChangedEvent(args: ThemeChangedEventArgs): void {
+    this._themeVariant = args.theme;
+    this.render();
+  }
+
   public render(): void {
     const element: React.ReactElement<ISharePointReactDemo2Props> =
       React.createElement(SharePointReactDemo2, {
-        description: this.properties.description,
+        documentTitle: this.properties.documentTitle,
+        currentUserDisplayName: this.context.pageContext.user.displayName,
+        storageList: this.properties.storageList,
+        acknowledgementLabel: this.properties.acknowledgementLabel,
+        acknowledgementMessage: this.properties.acknowledgementMessage,
+        readMessage: this.properties.readMessage,
+        themeVariant: this._themeVariant,
+        configured: this.properties.storageList
+          ? this.properties.storageList != ""
+          : false,
+        context: this.context,
       });
 
     ReactDom.render(element, this.domElement);
@@ -49,8 +96,33 @@ export default class SharePointReactDemo2WebPart extends BaseClientSideWebPart<I
             {
               groupName: strings.BasicGroupName,
               groupFields: [
-                PropertyPaneTextField("description", {
-                  label: strings.DescriptionFieldLabel,
+                PropertyFieldListPicker("storageList", {
+                  label: strings.StorageListLabel,
+                  selectedList: this.properties.storageList,
+                  includeHidden: false,
+                  orderBy: PropertyFieldListPickerOrderBy.Title,
+                  disabled: false,
+                  onPropertyChange: this.onPropertyPaneFieldChanged.bind(this),
+                  properties: this.properties,
+                  context: this.context,
+                  onGetErrorMessage: null,
+                  deferredValidationTime: 0,
+                  key: "listPickerField",
+                  multiSelect: false,
+                  baseTemplate: 100,
+                }),
+
+                PropertyPaneTextField("documentTitle", {
+                  label: strings.DocumentTitleLabel,
+                }),
+                PropertyPaneTextField("acknowledgementLabel", {
+                  label: strings.AcknowledgementLabelLabel,
+                }),
+                PropertyPaneTextField("acknowledgementMessage", {
+                  label: strings.AcknowledgementMessageLabel,
+                }),
+                PropertyPaneTextField("readMessage", {
+                  label: strings.ReadMessageLabel,
                 }),
               ],
             },

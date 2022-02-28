@@ -6,10 +6,10 @@ export interface ISharePointReactDemo2Props {
   documentTitle: string;
   currentUserDisplayName: string;
   storageList: string;
-  acknowledgementLable: string;
+  acknowledgementLabel: string;
   acknowledgementMessage: string;
   readMessage: string;
   themeVariant: IReadonlyTheme | undefined;
   configured: boolean;
-  contex: WebPartContext;
+  context: WebPartContext;
 }
